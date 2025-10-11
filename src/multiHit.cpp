@@ -17,6 +17,20 @@
 #include "multiHit.h"
 #include "utils.h"
 
+#ifdef ENABLE_PROFILE
+static double iter_base_times[TIMING_COUNT];
+
+static inline void snapshot_iter_timers() {
+  for (int i = 0; i < TIMING_COUNT; ++i)
+    iter_base_times[i] = elapsed_times[i];
+}
+
+static inline double iter_delta(int timer_id) {
+  double d = elapsed_times[timer_id] - iter_base_times[timer_id];
+  return d < 0.0 ? 0.0 : d;
+}
+#endif
+
 //////////////////////////////  Start Allreduce_hierarchical
 /////////////////////////
 
@@ -394,6 +408,7 @@ static void node_leader_hierarchical(WorkChunk availableWork, int num_workers,
       double inner_pct =
           100.0 * (double)combs_dispensed / (double)approx_per_node;
 
+      /**
       printf("iter: %zu | cover: %lld/%lld | time: %.0f sec | avg_outer_time: "
              "%.0f sec "
              "||| inner_progress (combs dispensed): ~%lld/%lld (~%.0f%%) | "
@@ -402,7 +417,30 @@ static void node_leader_hierarchical(WorkChunk availableWork, int num_workers,
              iter_display, gprog.cover_count, gprog.total_tumor,
              total_outer_elapsed, avg_outer_time, (long long)combs_dispensed,
              (long long)approx_per_node, inner_pct, availableWork.start,
-             availableWork.end, inner_elapsed);
+             availableWork.end, inner_elapsed); **/
+
+      double comm_local_iter = iter_delta(COMM_LOCAL_TIME);
+      double comm_global_iter = iter_delta(COMM_GLOBAL_TIME);
+      double worker_idle_iter = iter_delta(WORKER_IDLE_TIME);
+      double worker_time_iter = iter_delta(WORKER_TIME);
+      double worker_run_direct_iter = iter_delta(WORKER_RUNNING_TIME);
+      double worker_run_iter =
+          (worker_run_direct_iter > 0.0)
+              ? worker_run_direct_iter
+              : std::max(0.0, worker_time_iter - worker_idle_iter);
+
+      printf("iter: %zu | cover: %lld/%lld | time: %.0f sec | avg_outer_time: "
+             "%.0f sec "
+             "||| inner_progress (combs dispensed): ~%lld/%lld (~%.0f%%) | "
+             "tasks unclaimed [start -> end]: %lld -> %lld | "
+             "inner_time: %.0f sec | "
+             "comm_local(iter): %.0f sec | comm_global(iter): %.0f sec | "
+             "worker_idle(iter): %.0f sec | worker_run(iter): %.0f sec\n",
+             iter_display, gprog.cover_count, gprog.total_tumor,
+             total_outer_elapsed, avg_outer_time, (long long)combs_dispensed,
+             (long long)approx_per_node, inner_pct, availableWork.start,
+             availableWork.end, inner_elapsed, comm_local_iter,
+             comm_global_iter, worker_idle_iter, worker_run_iter);
       fflush(stdout);
 
       END_TIMING(print_leader, elapsed_times[EXCLUDE_TIME]);
@@ -448,6 +486,10 @@ static inline void execute_hierarchical(int rank, int size_minus_one,
                                         double &localBestMaxF, int localComb[],
                                         sets_t dataTable, SET *buffers,
                                         CommsStruct &comms) {
+
+#ifdef ENABLE_PROFILE
+  snapshot_iter_timers();
+#endif
 
 #ifdef ENABLE_PROFILE
   if (comms.global_rank == 0)
@@ -878,6 +920,7 @@ void distribute_tasks(int rank, int size, const char *outFilename,
 #ifdef ENABLE_PROFILE
     double outer_iter_start = MPI_Wtime();
 #endif
+
     std::fill(std::begin(bound_level_counts), std::end(bound_level_counts), 0);
     double localBestMaxF;
     int localComb[NUMHITS];
