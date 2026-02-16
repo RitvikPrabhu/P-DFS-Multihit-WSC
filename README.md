@@ -39,6 +39,54 @@ A common organization is one directory per cancer type / TCGA project:
 ```
 
 ---
+## Data processing
+
+The repository includes a preprocessing script:
+
+- `utils/preprocessing_maf.py`
+
+This script:
+- reads all MAF files under a GDC download directory
+- filters to functionally relevant variants
+- separates tumor vs matched-normal calls
+- emits intermediate files used by downstream merge/packaging steps
+
+### 1) Run MAF preprocessing
+
+```bash
+python3 utils/preprocessing_maf.py <GDC_DOWNLOAD_DIR>
+```
+
+**Input**
+- `<GDC_DOWNLOAD_DIR>`: directory containing the GDC-downloaded MAF subfolders (the script scans `"<GDC_DOWNLOAD_DIR>/*/*.maf.*"`)
+
+**Variant filtering**
+- Keeps: `Missense_Mutation`, `Nonsense_Mutation`, `Frame_Shift_Ins`, `Frame_Shift_Del`,
+  `In_Frame_Ins`, `In_Frame_Del`, `Splice_Site`, `Translation_Start_Site`, `Nonstop_Mutation`
+- Normalizes sample barcodes to the first 12 characters.
+- Treats a call as mutated if the tumor/normal allele differs from the reference allele.
+
+### 2) Outputs produced by `preprocessing_maf.py`
+
+The script writes **two files** (to the current working directory):
+
+1. **Tumor mutation matrix file**
+   - Name pattern:
+     - `Tumor_matrix_attempt_2_<DATASET_TAG>.txt`
+   - Contents:
+     - a tab-separated table with gene/sample indices and a binary mutation indicator.
+     - includes `Gene` and `Sample` (barcode) columns for traceability.
+
+2. **Normal mutation list file**
+   - Name pattern:
+     - `Normal_list_attempt_2_<DATASET_TAG>.txt`
+   - Contents:
+     - a tab-separated two-column list containing `(Gene, SampleIndex)` pairs for normal calls.
+     - sample indices are aligned to tumor indices when possible. Unmatched normals are assigned new indices.
+
+> `<DATASET_TAG>` is derived from the input directory name inside the script.
+
+---
 
 
 ## Build
@@ -169,6 +217,7 @@ python3 utils/verifyAccuracy.py <MATRIX_FILE> <GENE_SAMPLE_LIST_FILE> <RESULT_FI
 The script reports whether the result file achieves the expected tumor coverage and typically identifies any uncovered samples (exact reporting depends on the script).
 
 ---
+
 
 
 
