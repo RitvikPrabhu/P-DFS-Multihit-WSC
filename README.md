@@ -13,6 +13,34 @@ A C++ implementation of a **Pruned Depth-First Search (P-DFS)** pipeline for per
 
 ---
 
+## Data source (TCGA)
+
+This codebase is designed to work with mutation data from **The Cancer Genome Atlas (TCGA)**:
+- TCGA overview: https://www.cancer.gov/ccg/research/genome-sequencing/tcga
+- Practical access is typically via the **Genomic Data Commons (GDC)** using the **GDC Data Portal** + **GDC client**.
+
+### Download mutations (GDC client workflow)
+
+1. In the **GDC Data Portal**, select the TCGA project(s) you want and add the corresponding mutation files (MAF) to your cart.
+2. Download the **manifest** from the cart.
+3. Use the **GDC client** to download the files:
+
+```bash
+gdc-client download -m <MANIFEST_FILE> -d <OUTPUT_DIR>
+```
+
+A common organization is one directory per cancer type / TCGA project:
+
+```
+<OUTPUT_DIR>/
+  <TCGA_PROJECT_1>/   # MAF files
+  <TCGA_PROJECT_2>/   # MAF files
+  ...
+```
+
+---
+
+
 ## Build
 
 This project is typically built with **Ninja**. If the repo already has a configured `build/` directory (i.e., it contains a `build.ninja` file), you can build directly:
@@ -141,6 +169,7 @@ python3 utils/verifyAccuracy.py <MATRIX_FILE> <GENE_SAMPLE_LIST_FILE> <RESULT_FI
 The script reports whether the result file achieves the expected tumor coverage and typically identifies any uncovered samples (exact reporting depends on the script).
 
 ---
+
 
 
 
