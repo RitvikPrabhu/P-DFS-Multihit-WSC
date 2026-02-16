@@ -9,6 +9,7 @@ A C++ implementation of a **Pruned Depth-First Search (P-DFS)** pipeline for per
 - A C++17-capable compiler (GCC/Clang)
 - Ninja
 - **MPI runtime** for `mpirun`
+- Python 3.10 or later
 
 ---
 
@@ -27,6 +28,38 @@ If your `build/` directory is not configured yet (no `build.ninja`), configure i
 mkdir -p build
 cd build
 cmake -G Ninja ..
+ninja
+```
+
+---
+
+## Configuring number of hits and bounded vs exhaustive search
+
+Two key settings are compile-time configuration options controlled by CMake cache variables:
+
+1. **Number of hits (`NUMHITS`)**  
+   In `CMakeLists.txt`, this is defined as:
+   - `set(NUMHITS "4" CACHE STRING "Number of hits in the pattern (e.g. 3, 4, 5, 6...)")`
+
+2. **Bounded/pruned vs exhaustive (`BOUND`)**  
+   In `CMakeLists.txt`, this is defined as:
+   - `option(BOUND "Enable DFS" ON)`
+
+### Easiest way (recommended): set CMake variables on configure
+
+Instead of editing `CMakeLists.txt`, pass these values when you run `cmake`:
+
+```bash
+mkdir -p build
+cd build
+cmake -G Ninja .. -DNUMHITS=<K> -DBOUND=ON
+ninja
+```
+
+To switch to exhaustive mode, set `BOUND=OFF`:
+
+```bash
+cmake -G Ninja .. -DNUMHITS=<K> -DBOUND=OFF
 ninja
 ```
 
@@ -108,6 +141,7 @@ python3 utils/verifyAccuracy.py <MATRIX_FILE> <GENE_SAMPLE_LIST_FILE> <RESULT_FI
 The script reports whether the result file achieves the expected tumor coverage and typically identifies any uncovered samples (exact reporting depends on the script).
 
 ---
+
 
 
 
