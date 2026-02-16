@@ -51,7 +51,7 @@ This script:
 - separates tumor vs matched-normal calls
 - emits intermediate files used by downstream merge/packaging steps
 
-### 1) Run MAF preprocessing
+### Stage 1: Run MAF preprocessing
 
 ```bash
 python3 utils/preprocessing_maf.py <GDC_DOWNLOAD_DIR>
@@ -85,6 +85,46 @@ The script writes **two files** (to the current working directory):
      - sample indices are aligned to tumor indices when possible. Unmatched normals are assigned new indices.
 
 > `<DATASET_TAG>` is derived from the input directory name inside the script.
+
+---
+
+### Stage 2: Create the combined solver input (bitwise + sorted)
+
+After Stage 1, run:
+
+- `utils/process_gene_data.py`
+
+This script:
+- combines the processed tumor/normal artifacts into a **bitwise representation**
+- **sorts genes from most sparse → least sparse**
+- writes the final **combined dataset file** used by `./run`
+- produces a **gene map** used later to convert output indices back to gene names
+
+#### Usage
+
+```bash
+python3 utils/process_gene_data.py <TUMOR_MATRIX_FILE> <GENE_SAMPLE_LIST_FILE> <COMBINED_OUTPUT_FILE>
+```
+
+- `<TUMOR_MATRIX_FILE>`: tumor mutation matrix produced during preprocessing
+- `<GENE_SAMPLE_LIST_FILE>`: gene-sample list produced during preprocessing (**before** merge)
+- `<COMBINED_OUTPUT_FILE>`: output file to be created (this is what you pass as `<PATH_TO_DATA_FILE>` to `./run`)
+
+Additional output generated:
+- `<COMBINED_OUTPUT_FILE>.gene_map` (index → gene name mapping)
+
+#### What the input matrix looks like (conceptual)
+
+Rows are genes; columns are samples (tumor + normal). Entries are binary mutation indicators.
+
+```
+        TS1  TS2  TS3  NS1  NS2
+G1       1    0    1    0    0
+G2       0    1    0    0    1
+G3       1    1    0    0    0
+```
+
+(Here `TS*` are tumor samples and `NS*` are normal samples. The real files will use TCGA-style sample IDs.)
 
 ---
 
@@ -210,13 +250,14 @@ In theory, taking the **union** of all k-hit sets in the result file should allo
 python3 utils/verifyAccuracy.py <MATRIX_FILE> <GENE_SAMPLE_LIST_FILE> <RESULT_FILE>
 ```
 
-- `<MATRIX_FILE>`: the preprocessed mutation matrix produced during raw-data preprocessing (**before** the merge step)
-- `<GENE_SAMPLE_LIST_FILE>`: the gene-sample list produced during preprocessing (**before** the merge step)
+- `<MATRIX_FILE>`: the tumor mutation matrix produced during preprocessing (**before** the merge step)
+- `<GENE_SAMPLE_LIST_FILE>`: gene-sample list produced during preprocessing (**before** merge)
 - `<RESULT_FILE>`: the solver output file containing `(i1, i2, ..., ik)` tuples
 
 The script reports whether the result file achieves the expected tumor coverage and typically identifies any uncovered samples (exact reporting depends on the script).
 
 ---
+
 
 
 
