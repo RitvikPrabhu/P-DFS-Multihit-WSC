@@ -7,11 +7,23 @@ A C++ implementation of a **Pruned Depth-First Search (P-DFS)** pipeline for per
 ### Requirements
 - CMake 
 - A C++17-capable compiler (GCC/Clang)
-- Linux/macOS recommended
+- Ninja
 
-- ### Compile
+## Build
+
+This project is typically built with **Ninja**. If the repo already has a configured `build/` directory (i.e., it contains a `build.ninja` file), you can build directly:
+
 ```bash
-# From repo root
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build -j
+cd build
+ninja
 ```
+
+If your `build/` directory is not configured yet (no `build.ninja`), configure it once with CMake and then build:
+
+```bash
+mkdir -p build
+cd build
+cmake -G Ninja ..
+ninja
+```
+
