@@ -16,7 +16,7 @@ if(ENABLE_PROFILE)
   add_definitions(-DENABLE_PROFILE)
 endif()
 
-option(BOUND "Enable branch and bound" ON)
+option(BOUND "Enable DFS" ON)
 if(BOUND)
   add_definitions(-DBOUND)
 endif()
