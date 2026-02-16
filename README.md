@@ -2,14 +2,14 @@
 
 A C++ implementation of a **Pruned Depth-First Search (P-DFS)** pipeline for performing **Weighted Set Cover (WSC)** to identify gene combinations that contribute towards carcinogenesis.
 
-## Build (CMake)
+## Build 
 
 ### Requirements
 - CMake 
 - A C++17-capable compiler (GCC/Clang)
 - Ninja
 
-## Build
+### Compile
 
 This project is typically built with **Ninja**. If the repo already has a configured `build/` directory (i.e., it contains a `build.ninja` file), you can build directly:
 
@@ -26,4 +26,5 @@ cd build
 cmake -G Ninja ..
 ninja
 ```
+
 
